@@ -19,7 +19,7 @@
 
 ---
 
-[link](amzacharias.github.io) 
+[link](amzacharias.github.io) <br>
 [markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/)
 
 ![image](image_file.png)
