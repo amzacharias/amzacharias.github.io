@@ -1,25 +1,16 @@
-# Header 1 
-## Header 2
-### Header 3
+# Welcome! 
 
-**bold**
-*italics* 
+## About me: 
+PhD Student: Experimental Medicine <br>
+Laboratories: 
+- [Pain Chronobiology and Neuroimmunology Lab](https://www.ghasemloulab.ca/)
+- [Computational Genomics Lab](http://duanlab.ca/) 
 
-> block quote
+Supervised by: 
+- Dr. Nader Ghasemlou
+- Dr. Qingling Duan
 
-1. one
-2. two
-3. three
-
-- one
-- two
-- three
-
-`print(code)`
-
----
-
-[link](amzacharias.github.io) <br>
-[markdown cheatsheet](https://www.markdownguide.org/cheat-sheet/)
-
-![image](image_file.png)
+## Education
+- PhD Student (2022-present), Queen's University 
+- Master's of Biomedical Informatics (2021-2022), Queen's University
+- Bachelor of Science Honours, Biology (2017-2021)
