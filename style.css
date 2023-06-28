@@ -40,10 +40,10 @@ body {
 
 /* Content */
 .container {
-    display:grid;
+    display:flex;
     grid-template-columns: 1fr 2fr;
     background-color: #e0e0e0;
-    min-width: 100px; 
+
     max-width: 1000px;
     min-height: 30px;
     max-height: 1000px;
@@ -58,6 +58,8 @@ body {
 .leftSide .img {
     border-radius: 50%;
     overflow: hidden;
+    width: 200px; 
+    height: 200px;
 }
 .leftSide .text {
     text-align: center;
