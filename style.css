@@ -1,80 +1,77 @@
-*
-{
+* {
     margin: 0; 
     padding: 0; 
-    box-sizing: border-box; 
-    font-family: sans-serif;
+    box-sizing: border-box;
 }
-body
-{
-    background: #c9ada7; 
+body {
+    background-color: #fff;
+}
+
+/* Navigation bar */
+.navbar{
     display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    min-height: 100vh;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background-color: #607b7d;
+    color: #fff
 }
-.container 
-{
-    position: relative;
-    width: 100%; 
-    max-width: 1000px;
-    min-height: 1000px;
-    background: #c9ada7;
-    margin: 50px;
-    display: grid; 
-    grid-template-columns: 1fr 2fr; 
-    box-shadow: 0 35px 55px #22223B01;
+.logo {
+    font-size: 32px;
 }
-.container .leftSide 
-{
-    position: relative; 
-    background: #22223B;
-    padding: 40px;
+.navbar a {
+    color: #fff;
+    text-decoration: none;
 }
-.profileText
-{
-    position: relative; 
+.menu {
     display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    padding-bottom: 20px;
-    border-bottom: 1px solid #4A4E69;
+    gap: 1em; 
+    font-size: 18px; 
 }
-.profileText .imgBx 
-{
-    position: relative;
-    width: 200px; 
-    height: 200px; 
+.menu li {
+    padding: 5px 10px; 
+    list-style: none;
+}
+.menu li:hover {
+    background-color: #3a606e;
+    border-radius: 5px;
+    transition: 0.3s ease; 
+}
+
+/* Content */
+.container {
+    display:grid;
+    grid-template-columns: 1fr 2fr;
+    background-color: #e0e0e0;
+    min-width: 100px; 
+    min-height: 30px;
+    margin: 10px 0;
+
+}
+/* Left (Green) container */
+.leftSide {
+    background-color: #828e82;
+    padding: 10px;
+}
+.leftSide .img {
     border-radius: 50%;
-    overflow: hidden; 
+    overflow: hidden;
 }
-.profileText .imgBx img 
-{
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.leftSide .text {
+    text-align: center;
+    color: #fff;
 }
-.profileText h2 
-{
-    color: #f2e9e4; 
-    font-size: 1.5em;
-    margin-top: 20px; 
-    text-transform: uppercase; 
-    text-align: center; 
-    font-weight: 600; 
-    line-height: 1.4em;
+
+/* Right (Light yellow) container */
+.rightSide {
+    background-color: #e0e0e0;
+    padding: 10px;
 }
-.profileText h2 span 
-{
-    font-size: 0.8em; 
-    font-weight: 300;
+
+/* Footer */
+.footer {
+    padding: 10px;
 }
-.container .rightSide 
-{
-    position: relative; 
-    background: #f2e9e4;
-    padding: 40px;
+.footer li {
+    list-style: none;
 }
