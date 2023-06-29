@@ -57,7 +57,7 @@ body {
 
 /* Grid */
 .grid {
-    display:grid;
+    display: grid;
     grid-template-columns: 1fr 2fr;
     min-width: 100px;
     max-width: 600px;
@@ -75,6 +75,7 @@ body {
 .leftSide .img {
     border-radius: 50%;
     overflow: hidden;
+    width: 180px;
 }
 .leftSide img {
     width: 200px; 
@@ -89,7 +90,6 @@ body {
     background-color: #fff;
     padding: 10px;
     border-radius: 1%;
-    width: 100%;
 }
 
 /* Footer */
