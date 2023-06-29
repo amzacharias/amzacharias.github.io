@@ -5,7 +5,7 @@
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
 }
 body {
-    background-color: #e0e0e0;
+    background-color: #fff;
 }
 
 /* Navigation bar */
@@ -14,14 +14,14 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 20px;
-    background-color: #607b7d;
-    color: #fff;
+    background-color: #fff;
+    color: #000;
 }
 .logo {
     font-size: 32px;
 }
 .navbar a {
-    color: #fff;
+    color: #000;
     text-decoration: none;
 }
 .menu {
@@ -49,6 +49,7 @@ body {
     padding: 10px;
     border-radius: 1%;
     min-height: 200px;
+    border: solid;
 }
 
 .full .text {
@@ -64,10 +65,11 @@ body {
     min-height: 100px;
     max-height: 1000px;
     margin: 10px 0;
+    border: solid;
 }
 /* Left container */
 .leftSide {
-    background-color: #828e82;
+    background-color: #fff;
     padding: 10px;
     border-radius: 1%;
     width: 200px; 
@@ -82,7 +84,7 @@ body {
 }
 .leftSide .text {
     text-align: center;
-    color: #fff;
+    color: #000;
 }
 
 /* Right container */
