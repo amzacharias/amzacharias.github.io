@@ -53,6 +53,7 @@ body {
         rgba(0, 0, 0, 0.4)
       ),
       url("img/banff.jpeg");
+    background-size: 150%; 
     background-position: 50% 60%;
     /* background-color: #fff; */
     padding: 10px;
