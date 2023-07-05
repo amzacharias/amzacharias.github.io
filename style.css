@@ -58,9 +58,6 @@ body {
     min-height: 700px;
     border: solid;
 }
-.overlay {
-    background-color: aquamarine;
-}
 .welcome .text {
     font-size: 6rem;
     color: #fff; 
