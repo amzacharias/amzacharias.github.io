@@ -35,7 +35,9 @@ body {
     list-style: none;
 }
 .menu li:hover {
-    background-color: #3a606e;
+    background-color: #fff;
+    border: solid; 
+    border-color: #000;
     border-radius: 5px;
     transition: 0.3s ease; 
 }
