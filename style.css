@@ -60,9 +60,7 @@ body {
     border-radius: 1%;
     min-height: 700px;
     border: solid;
-}
-.welcome .text {
-    font-size: 5rem;
+    font-size: 5rem; 
     color: #fff; 
 }
 
