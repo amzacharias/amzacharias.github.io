@@ -69,18 +69,19 @@ body {
     display: flex;
     margin: 10px 0;
     border: solid;
+
 }
 /* Left container */
 .leftSide {
     padding: 10px;
     border-radius: 1%;
     width: 200px; 
+    height: 100px; 
 }
 .leftSide .img {
     border: dashed;
     border-radius: 50%;
     overflow: hidden;
-    width: 180px;
 }
 .leftSide img {
     width: 200px; 
@@ -92,9 +93,12 @@ body {
 
 /* Right container */
 .rightSide {
-    padding: 60px 0;
+    padding: 15% 0; 
     border-radius: 1%;
     text-align: center;
+}
+.rightSide .text {
+    max-width: 90%; 
 }
 
 /* CV */
