@@ -124,9 +124,19 @@ body {
 }
 /* Footer */
 .footer {
+    display: flex; 
     padding: 10px;
-    width: 100%;
+    justify-content: center;
 }
-.footer li {
-    list-style: none;
+.footer .fa {
+    font-size: 40px;
+    width: 50px;
+    text-align: center;
+    text-decoration: none;
+    color: #000; 
+}
+
+.footer .fa:hover {
+    color: #385da6; 
+    transition: color 0.2s ease; 
 }
