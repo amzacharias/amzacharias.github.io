@@ -1,0 +1,48 @@
+---
+title: "Introduction to Unix"
+author: "Amanda Zacharias"
+date: "`r format(Sys.time(), '%B %d %Y')`"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This page provides an overview of Unix syntax. Try to code along!
+>Be careful when coding in unix! It's easy to mess up your files.
+
+# Basic commands
+```{bash}
+# Get the current working directory
+pwd
+# Make a directory (i.e. folder)
+mkdir unixDemo
+# Change the current directory
+cd unixDemo
+# Once again, check the current directory
+pwd
+# List files in the current working directory
+ls
+# Create a file
+touch practice.txt
+# Edit a file
+#nano practice.txt
+```
+How nano should appear: 
+!(nano)[rTutorials/practiceNano.jpg]
+
+
+
+
+
+
+
+
+
+
