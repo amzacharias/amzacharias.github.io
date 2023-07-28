@@ -1,0 +1,275 @@
+---
+title: "Introduction to R"
+author: "Amanda Zacharias"
+output:
+  html_document:
+    rmdformats::html_clean: 
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This page provides an overview of R syntax. Try to code along!
+
+>For beginners: The help tab in the bottom right corner of RStudio is your best friend! Use it often
+
+## Basic math
+```{r}
+1 + 2 # addition
+1 - 2 # subtraction
+1 * 2 # multiplication
+1 / 2 # divition
+1^2 # exponentiation
+exp(2) # exponentiation (natural)
+log(2) # logarithm (natural)
+log2(2) # logarithm (base 2)
+log10(2) # logarithm (base 10)
+log(exp(2)) # log() and exp() cancel each other out
+abs(-2) # absolute value
+```
+
+## Rounding
+```{r}
+round(1.1387, digits = 2) # round up
+floor(1.1387) # lower integer
+ceiling(1.1387) # higher integer
+signif(1.1387, digits = 2) # significant digits
+```
+
+## Logic
+```{r}
+1 > 2 # greater
+1 < 2 # less 
+1 >= 2 # greater or equal
+1 <= 2 # less or equal
+1 == 2 # equal
+1 != 2 # not equal
+TRUE | FALSE # OR
+FALSE | FALSE # OR 
+TRUE & FALSE # AND
+TRUE & TRUE # AND
+```
+
+## Assigning and viewing variables 
+Generally `<-` is used to assign variables and `=` is used to assign parameters in functions.
+```{r}
+# Assign
+a <- 1
+b <- 2
+c <- a + b
+
+# View
+a # directly type the variable
+print(a) # print to console, and return invisibly (not great inside functions)
+paste(a) # convert to string, can be used to write to console but not often
+cat(a) # concatenate and print; no fancy formatting but my preferred approach
+
+```
+
+## Combining elements 
+```{r}
+# Vectors
+x <- c("a", "b", "c", "d")
+x
+y = c("a", "c", 2, "e")
+y
+```
+
+```{r}
+# Lists
+lst <- list(x, y)
+lst
+namedLst <- list("x" = x, "y" = y)
+namedLst
+```
+
+```{r}
+# Dataframes
+df <- data.frame("x" = x, 
+                 "y" = y)
+df
+```
+
+## Indexing by numbers
+```{r}
+# Vectors and lists
+x[0] # R is 1-based!
+x[1]
+x[-1]
+x[length(x) - 1]
+namedLst[1]
+namedLst[[1]]
+# Dataframes
+df[1, ]
+df[1:2, ]
+df[, 1]
+```
+
+## Indexing by names
+```{r}
+# String 
+namedLst["x"]
+namedLst[["x"]]
+df["x"]
+# $
+namedLst$x
+df$x
+# Range of numbers ======
+1:10
+1:length(x)
+seq(1 ,10 , 2)
+```
+
+## Random 
+```{r}
+set.seed(0)
+runif(5)
+sample(1:10, 1)
+```
+
+## Is x in y? 
+```{r}
+x %in% y # literally "is x in y?"
+match(x, y) # where is x first in y ? 
+match(c("a", "c"), c("a", "a", "b"))
+```
+
+## If else 
+```{r}
+num <- 10
+if (num < 10){
+  print("lesser")
+} else if (num > 10){
+  print("greater")
+} else if (num == 10){
+  print('equal')
+}
+```
+
+## Functions 
+```{r}
+# Simple function
+HelloWorld <- function(arg1, arg2="world"){
+  #' This function prints arg1 and arg2 to the console
+  #' 
+  #' @param arg1 First string
+  #' @param arg2 Second string
+  #' @return Prints a message to the console
+  #' @example
+  #' HelloWorld("Hello")
+  cat(arg1, arg2)
+  return(arg1)
+}
+HelloWorld("Hello")
+
+# Addition
+Add <- function(num1, num2){
+  #' This function adds two numbers together
+  #'
+  #' @param num1 A number
+  #' @param num2 A second number
+  #' @return Returns the sum of the two numbers
+  sum <- num1 + num2
+  return(sum)
+}
+Add(1, 2)
+```
+
+## Loops
+```{r}
+# For 
+for (obj in x){
+  print(obj)
+}
+for (idx in 1:length(x)){
+  print(idx)
+  print(x[idx])
+}
+```
+
+```{r}
+# While
+idx <- 1
+while (idx <= length(x)){
+  print(idx)
+  print(x[idx])
+  idx = idx + 1
+}
+```
+
+## Working directory
+```{r}
+getwd()
+#setwd()
+```
+
+## Input/Output
+```{r}
+# Common input functions
+csv <- read.csv("foo.csv")
+table <- read.table("foo.txt", header = TRUE)
+
+# Common output functions
+write.csv(csv, "practice.csv")
+write.table(table, "practice.txt")
+```
+
+## Install packages
+```{r}
+# Install CRAN
+# install.packages("dplyr")
+
+# Install Bioconductor
+# if (!require("BiocManager", quietly = TRUE)){
+#   install.packages("BiocManager")
+# }
+# BiocManager::install("dplyr")
+```
+
+```{r message=FALSE}
+# Load
+library("dplyr") # version 1.1.2
+# Inspect version
+packageVersion("dplyr")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

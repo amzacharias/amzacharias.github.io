@@ -123,6 +123,13 @@ body {
 .underline {
     text-decoration: underline; 
 }
+
+/* CV */
+.demo embed {
+  min-width: 800px; 
+  min-height: 600px;
+}
+
 /* Footer */
 .footer {
     display: flex; 
