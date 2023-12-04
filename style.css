@@ -33,6 +33,9 @@ body {
 .menu li {
     padding: 5px 10px; 
     list-style: none;
+    border: solid; 
+    border-color: transparent; 
+    border-radius: 5px;
 }
 .menu li:hover {
     background-color: #fff;
