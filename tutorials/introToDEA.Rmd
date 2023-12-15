@@ -1,0 +1,245 @@
+---
+title: "Introduction to differential expression analysis for bulk-seq data"
+author: "Amanda Zacharias"
+date: "`r format(Sys.time(), '%B %d %Y')`"
+output:
+  html_document:
+    theme: flatly
+    toc: true
+    toc_float: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr) # 1.45
+library(kableExtra) # 1.3.4
+```
+
+This page provides an introduction to performing differential expression analysis (DEA) with DESeq2 and EdgeR.
+The data used for this analysis comes from <a href="https://doi.org/10.1038/s41598-017-16664-z">Lopes <em>et al.</em>'s study</a> on sex differences of pain response in mice.
+
+# Environment
+
+This tutorial is written in R version 4.2.1. 
+
+Packages: 
+```{r message=FALSE, warning=FALSE, error=FALSE}
+library(readxl) # version 1.4.3
+library(GEOquery) # version 2.66.0
+library(dplyr) # version 1.1.4
+library(DESeq2) # version 1.38.3
+library(edgeR) # version 3.40.2
+```
+
+# Folder system setup
+
+Make folder for project files
+
+- `file.path()` combines paths/strings together in a way that is both Windows and Mac compatible
+- `getwd()` retrieves the current working directory, from which all files are stored
+- `system()` runs code in Unix while still being able to use R functions
+```{r}
+projDir <- file.path(getwd(), "deaDemo")
+# Inputs 
+dataDir <- file.path(projDir, "0_data")
+
+# Outputs
+```
+
+```{r eval=FALSE}
+# Make folders
+system(paste('mkdir', projDir, dataDir))
+```
+
+# Tutorial data
+
+## Download and load raw gene counts
+```{r eval=FALSE}
+# Download
+system(paste('wget -P', dataDir, "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE100nnn/GSE100035/suppl/GSE100035%5FSupplementary%5FTable%5F1.xlsx"))
+system(paste('wget -P', dataDir, "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE100nnn/GSE100035/suppl/GSE100035%5FSupplementary%5FTable%5F2.xlsx"))
+```
+
+```{r}
+# Load
+rawNaive <- read_excel(file.path(dataDir, "GSE100035_Supplementary_Table_1.xlsx"))
+rawInjured <- read_excel(file.path(dataDir, "GSE100035_Supplementary_Table_2.xlsx"))
+```
+
+## Preview raw gene counts {.tabset}
+
+### Raw
+```{r echo=FALSE}
+kable(rawNaive[1:2, ], format="html") %>% kable_styling("striped") %>% scroll_box(width = "100%")
+```
+
+### Injured
+```{r echo=FALSE}
+kable(rawInjured[1:2, ], format="html") %>% kable_styling("striped") %>% scroll_box(width = "100%")
+```
+
+## {-}
+
+These dataframes indicate the number of times each gene is counted in each sample. `rawNaive` has gene counts for the naive mice. `rawInjured` has gene counts for the injured mice.
+
+- `gene_short_name` contains gene names that might be familiar to a biologist. However, some genes have multiple names and are generally not the most robust. 
+- `gene_id` a more robust way of uniquely naming genes. The nomenclature used for these genes comes from Ensemble/Gencode.
+- `tss_id` indicates  which transcripts are contributing to a gene's counts; for this analysis, it is not important. 
+- `locus` the specific genomic coordinates of a gene. This a handy column to have, but not relevant for this tutorial.
+- `avg.FPKM`, `expressed?`, `sum_male`, and `sum_female` are calculated by the data's original authors, and is not relevant for this tutorial.
+- `S209_male` to `S230_female` are columns representing gene counts in each sample, where each column is a different sample. Similarlty, `SNL_male` to `SNL_female_260144` in the second dataset each represent a sample.
+
+## Download and load sample metadata
+```{r include=FALSE}
+# Download 
+system(paste('wget -P', dataDir, "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE100nnn/GSE100035/matrix/GSE100035_series_matrix.txt.gz"))
+# Unzip
+system(paste('gunzip', file.path(dataDir, "GSE100035_series_matrix.txt.gz")))
+```
+
+```{r error=FALSE, message=FALSE, warning=FALSE}
+# Load metadata about samples into an `ExpressionSet` object
+seriesEset <- getGEO(filename = file.path(dataDir, "GSE100035_series_matrix.txt"))
+# Extract sample metadata
+seriesMatrix <- seriesEset@phenoData@data
+```
+
+### Preview
+
+Excluding columns with large amounts of text for the sake of visuals
+
+```{r echo=FALSE}
+seriesMatrix %>% 
+  dplyr::select(-c(17:18, 22:31, "description.1", "status", "characteristics_ch1.1")) %>% 
+  head(n=2) %>% 
+  kable(format="html") %>% kable_styling("striped") %>% scroll_box(width = "100%")
+```
+
+The columns of interest for us are, `characteristics_ch1.2`, `characteristics_ch1.3`, and `description`.
+
+- `characteristics_ch1.2` indicates the sex of samples
+- `characteristics_ch1.3` indicates the injury status of samples
+- `description` contains sample IDs that match the column names of the gene counts excel sheet
+
+# Clean up raw variables for analysis
+
+Let's select only the variables that we care about from the count dataframes and seriesMatrix variable.
+Note that we never overwrite a variable! Overwriting variables is a great way to get unreliable results.
+
+We use a pipe operator %>% to take the output of one function and feed it as the first argument to a next function, without creating a new variable. I find pipes generally make your code easier to read and help your global environment stay clean.
+
+## Metadata 
+
+Extracting the columns of interest that were previously mentioned.
+
+Rather than storing the metadata in a variable called "metadata", I prefer to call it "coldata". This choice is purely stylistic and personal preference. I mention this caveat because I found it confusing to see others using a variable called "coldata" when I first started learning DEA.
+```{r}
+coldata <- seriesMatrix %>% 
+  # Select variables
+  dplyr::select(c(description, characteristics_ch1.2, characteristics_ch1.3)) %>% 
+  # Make column names more descriptive
+  dplyr::rename(
+    sampleId = description, 
+    sex = characteristics_ch1.2, 
+    phenotype = characteristics_ch1.3) %>% 
+  # Cleanup values in columns
+  mutate(
+    # Remove "Sex: " from `characteristics_ch1.2` column using regex
+    sex = gsub("Sex: ", "", sex), 
+    # Remove "injury condition: " from `characteristics_ch1.2` column using regex
+    phenotype = gsub("injury condition: ", "", phenotype)
+    ) %>% 
+  # Remove special characters from the injury column 
+  #   If value in phenotype is "naïve", remove the special character. Else, replace the value with "injured"
+  mutate(phenotype = ifelse(
+    phenotype == "naïve", "naive", "injured"
+  )) %>% 
+  # Ensure the `phenotype` column is stored as a factor
+  mutate(phenotype = factor(phenotype, levels = c("naive", "injured")))
+```
+
+For reasons that will be explained, split coldata by phenotype
+```{r}
+coldataList <- list()
+for (pheno in unique(coldata$phenotype)){
+  coldataList[[pheno]] <- coldata %>% subset(phenotype == pheno)
+}
+```
+
+### Preview {.tabset}
+
+#### Naive
+```{r echo=FALSE}
+kable(coldataList$naive[1:2, ], format="html") %>% kable_styling("striped") %>% scroll_box(width = "100%")
+```
+
+#### Injured
+```{r echo=FALSE}
+kable(coldataList$injured[1:2, ], format="html") %>% kable_styling("striped") %>% scroll_box(width = "100%")
+```
+
+### {-}
+
+## Gene counts
+
+While it may be tempting to merge the naive and injured datasets, it appears that this may be inappropriate. First, the rawInjured and rawNaive datasets have a different number of rows/genes, suggesting that they were processed separately. This is important, because  processing samples separately can cause unwanted technical variation and skew the results. Hence, we will not be able to directly compare naive mice to injured mice.
+
+Let's replace the row numbers with gene ids.
+```{r error=TRUE}
+rawNaive %>% 
+  tibble::column_to_rownames("gene_id")
+```
+This fails because at least one gene id occurs multiple times! I suspect this is because different transcripts are being attributed to the same gene, and those transcripts are not being totally merged. Ex: 
+```{r}
+rawNaive %>% 
+  group_by(gene_id) %>% 
+  filter(n() > 1)
+```
+Given that the original authors do not clearly address this issue in their manuscript, we will use the `make.names()` function to append ".1" to end of gene_id duplicants. Other options would be to 1) pick the gene with the highest average counts, or 2) calculate the average of both genes' counts. Ideally, I would make sure the previous data processing steps were completed correctly, but that is beyond the scope of this tutorial.
+
+Since the code to execute this data cleaning is not trivially short and needs to run twice, let's create a function!
+```{r}
+GenesToRownames <- function(inDf){
+  #' This function to  cleanup gene_ids for a gene count matrix
+  #' @param inDf An input data frame with gene counts
+  #' @return returns a data frame with gene counts. Row names are gene ids
+  outDf <- inDf %>% 
+    # Fix duplicants
+    mutate("unique_gene_id" = make.names(gene_id, unique = TRUE)) %>% 
+    # Remove the gene_id column
+    dplyr::select(-c(gene_id)) %>% 
+    # Replace rownames with gene ids
+    tibble::column_to_rownames("unique_gene_id")
+  # Return
+  return(outDf)
+}
+```
+
+Next, let's remove the columns that we don't need, such as `gene_short_name`, `tss_id`, `locus`, etc. We will also need to make sure that the order of samples in the gene counts matches the order of samples in the coldatas. Let's achieve both aims at once with a function!
+```{r}
+OrganizeGeneColumns <- function(inCounts, inColdat){
+  #' This function selects only sample columns and reorders them to match coldata's rows.
+  #' @param inCounts dataframe with gene counts
+  #' @param inColdat dataframe with sample metadata
+  #' @return Returns an organized count dataframe
+  outCounts <- inCounts %>% 
+    dplyr::select(as.character(inColdat$sampleId))
+  return(outCounts)
+}
+```
+
+Now let's execute the functions!
+```{r}
+naiveCounts <- rawNaive %>% GenesToRownames() %>% OrganizeGeneColumns(inColdat = coldataList$naive)
+injuredCounts <- rawInjured %>% GenesToRownames() %>% OrganizeGeneColumns(inColdat = coldataList$injured)
+# Preview
+head(naiveCounts, n = 2)
+head(injuredCounts, n = 2)
+```
+
+
+
+
+
+
