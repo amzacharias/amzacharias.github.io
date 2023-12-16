@@ -325,9 +325,70 @@ sf.ddsInjured <- estimateSizeFactors(ddsInjured)
 ```
 
 ## Non-specific filtering
+
+Use plots and distributions of MAD to figure out what a good filtering threshold is. Filtering after normalization and dispersion estimation to prevent estimations and shrinkage from getting calculated incorrectly.
+MAD = median absolute deviation, more robust than something like standard deviation
+
+### Functions
 ```{r}
-filt.ddsNaive <- sf.ddsNaive
+GetMads <- function(counts){
+  # Calculate the median absolute deviation of each gene/transcript across samples
+  # Input: counts dataframe
+  # Output: dataframe with each gene's MAD
+  mads <- data.frame(apply(X = counts, MARGIN = 1,  FUN = mad))
+  colnames(mads) <- "mad"
+  return(mads)
+}
+GetMadCutoff <- function(counts){
+  # Visualize quantiles to determine the optimal cutoff
+  # Input: feature (gene/transcript) counts
+  # Output: saves a plot called "madQuantiles.pdf" in the plotsDir; returns the MADs
+  madsAll <- data.frame(id = rownames(counts), mad = GetMads(counts)) 
+  madsQuantiles <- quantile(madsAll$mad, probs = seq(0, .9, by = .01))
+  # Figure out how many features are kept after each filtering cutoff
+  madNumKept <- c()
+  quantileLables <- c()
+  for (val in madsQuantiles){
+    madNumKept <- append(madNumKept, length(subset(madsAll, mad >= val)$mad))
+    quantileLables <- append(quantileLables, names(madsQuantiles)[match(val, madsQuantiles)])
+  }
+  plotMadQuantiles <- data.frame(quantileLables, madNumKept)
+  # Make plot
+  gplot <- plotMadQuantiles %>% 
+    ggplot(aes(x = as.numeric(gsub("%", "", quantileLables)), y = madNumKept)) + 
+    geom_point() + 
+    scale_x_continuous(name = "Percentile", breaks = seq(0, 100, 10), limits = c(0, 100)) + 
+    ylab("Number of remaining features") + # features = gene or transcript
+    ggtitle("Visualizing MAD cutoffs") + 
+    theme_bw() +
+    theme(plot.title = element_text(hjust = 0.5))
+  return(list("madsAll" = madsAll, "gplot" = gplot))
+} 
+```
+
+### Execute
+```{r}
+mads <- GetMadCutoff(counts(sf.ddsNaive, normalized = TRUE))
+mads[["gplot"]]
+```
+
+Based on the plot, choose range of quantiles to search for an exact threshold
+```{r}
+quantile(mads$mad, probs = seq(.5, 0.7, 0.1)) # adjust range in seq until see a transition between 0 and 1
+```
+
+Remove lowly variable genes
+```{r}
+filt_threshold <- 0.006548972 # based on this distribution and plot, this MAD is a good cutoff 
+toKeep <- rownames(subset(mads, mad >= filt_threshold))
+filt.ddsNaive <- sf.ddsNaive[toKeep, ]
 filt.ddsInjured <- sf.ddsInjured
+```
+
+### What are the differences?
+```{r}
+cat(cat("Before filtering: ", nrow(sf.ddsNaive), "\n"), 
+    cat("After filtering: ", nrow(filt.ddsNaive), "\n"))
 ```
 
 ## Estimate dispersion to minimize lowly expressed, variable genes
