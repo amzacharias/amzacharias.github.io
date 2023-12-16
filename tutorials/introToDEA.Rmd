@@ -16,7 +16,7 @@ library(knitr) # 1.45
 library(kableExtra) # 1.3.4
 ```
 
-This page provides an introduction to performing differential expression analysis (DEA) with DESeq2 and EdgeR.
+This page provides an introduction to performing differential expression analysis (DEA) with DESeq2
 The data used for this analysis comes from <a href="https://doi.org/10.1038/s41598-017-16664-z">Lopes <em>et al.</em>'s study</a> on sex differences of pain response in mice.
 
 # Environment
@@ -29,8 +29,8 @@ library(readxl) # version 1.4.3
 library(GEOquery) # version 2.66.0
 library(dplyr) # version 1.1.4
 library(DESeq2) # version 1.38.3
-library(edgeR) # version 3.40.2
-library(ggplot2)
+library(ggplot2) # version 3.4.4
+library(cowplot) # version 1.1.2
 ```
 
 # Folder system setup
@@ -243,13 +243,13 @@ head(naiveCounts, n = 2)
 head(injuredCounts, n = 2)
 ```
 
-## Quality Control
+# Quality Control
 
 Let's do some very basic quality control of samples by using unsupervised clustering. Specifically, we will do Principal Component Analysis with DESeq2.
 
 > Input for DESeq2 should always be raw counts. Based on author comments, it appears that the counts downloaded are FPKM transformed, i.e. not raw. For this reason, the code used in this tutorial is fine, but the results should be taken with a grain of salt.
 
-### Initalize DESeq2 Objects
+## Initalize DESeq2 Objects
 
 Our variable of interest for DEA is sex. I.e. what genes are different between male and female?
 DESeq2 expects gene counts to be whole numbers. Since our counts are floats, we simply round them.
@@ -261,7 +261,7 @@ ddsInjured <- DESeqDataSetFromMatrix(
   countData = round(injuredCounts), colData = coldataList$injured, design = ~sex)
 ```
 
-### Transformation
+## Transformation
 
 The purpose of transforming gene counts prior to unsupervised clustering is to prevent highly expressed genes from nominating the clustering results. DESeq2 provides two methods to achieve this: 
 
@@ -282,7 +282,7 @@ t.ddsNaive <- DoTransformations(ddsNaive)
 t.ddsInjured <- DoTransformations(ddsInjured)
 ```
 
-### PCA Calculations
+## PCA Calculations
 
 Storing results in a named list, so we don't have to copy-and-paste as much code during the plotting step.
 ```{r}
@@ -294,15 +294,134 @@ pcaDataList <- list(
 )
 ```
 
-### PCA Plots
+## PCA Plots
 ```{r}
-pcaDataList$vst.injured %>% 
-  ggplot(aes(x = PC1, y = PC2, colour = sex, shape = sex)) + 
+# Generate plots and store in list
+pcaPlots <- list()
+for (set in names(pcaDataList)){
+  pcaPlots[[set]] <- pcaDataList[[set]] %>% 
+    ggplot(aes(x = PC1, y = PC2, colour = sex, shape = sex)) + 
   geom_point(size = 3) + 
+  ggtitle(set) + 
   theme_bw() + 
   coord_fixed()
-
+}
+# Show all plots with cowplot
+plot_grid(pcaPlots[[1]] + theme(legend.position = "none"), pcaPlots[[2]], 
+          pcaPlots[[3]] + theme(legend.position = "none"), pcaPlots[[4]], 
+          rel_widths = c(2, 1.75))
 ```
+
+Albiet the clustering is different between rlog and vst, but the gist is the same. The PCAs don't reveal any clear distinction between the male and female samples; perhaps we won't see many differentially expressed genes male vs. female. Also, you might argue that the two naive male samples that cluster further away from the other samples should be removed, but I think they're not distinct enough to be removed.
+
+# DEA with DESeq2
+
+Let's begin differential expression analysis with DESeq2! 
+
+## Estimating size factors for normalization
+```{r}
+sf.ddsNaive <- estimateSizeFactors(ddsNaive)
+sf.ddsInjured <- estimateSizeFactors(ddsInjured)
+```
+
+## Non-specific filtering
+```{r}
+filt.ddsNaive <- sf.ddsNaive
+filt.ddsInjured <- sf.ddsInjured
+```
+
+## Estimate dispersion to minimize lowly expressed, variable genes
+```{r}
+ed.ddsNaive <- estimateDispersions(filt.ddsNaive)
+ed.ddsInjured <- estimateDispersions(filt.ddsInjured)
+```
+
+Let's inspect 
+```{r}
+plotDispEsts(ed.ddsNaive,
+  ylab = "Dispersion", xlab = "Mean of normalized counts",
+  main = "Naive"
+)
+plotDispEsts(ed.ddsInjured,
+  ylab = "Dispersion", xlab = "Mean of normalized counts",
+  main = "Injured"
+)
+```
+
+## Wald test
+```{r}
+wt.ddsNaive <- nbinomWaldTest(ed.ddsNaive)
+wt.ddsInjured <- nbinomWaldTest(ed.ddsInjured)
+```
+
+## Get results
+```{r}
+res.Naive <- results(wt.ddsNaive, contrast=c("sex","female","male"), 
+                     alpha = 0.05, pAdjustMethod = "BH")
+res.Injured <- results(wt.ddsInjured, contrast=c("sex","female","male"), 
+                     alpha = 0.05, pAdjustMethod = "BH")
+```
+
+### Convert results to dataframes
+```{r}
+# Naive
+allRes.Naive <- res.Naive %>% as.data.frame() %>% 
+  arrange(padj) %>% 
+  tibble::rownames_to_column("unique_gene_id") %>% 
+  # remove our artificial .1's from gene ids
+  mutate(gene_id = gsub("\\.1", "", unique_gene_id)) %>% 
+  dplyr::select(-c(unique_gene_id)) %>% 
+  # add gene information from raw counts
+    # within left_join, selecting columsn from rawNaive, 
+    # and ensuring all rows are unique
+  left_join(rawNaive %>% 
+              select(c(gene_id, gene_short_name)) %>% 
+              unique(), 
+            by = join_by(gene_id)) %>% 
+  # move gene columns to the front
+  relocate(gene_id, gene_short_name)
+# Injured
+allRes.Injured <- res.Injured %>% as.data.frame() %>% 
+  arrange(padj) %>% 
+  tibble::rownames_to_column("unique_gene_id") %>% 
+  mutate(gene_id = gsub("\\.1", "", unique_gene_id)) %>% 
+  dplyr::select(-c(unique_gene_id)) %>% 
+  left_join(rawInjured %>% 
+              select(c(gene_id, gene_short_name)) %>% 
+              unique(), 
+            by = join_by(gene_id)) %>% 
+  relocate(gene_id, gene_short_name)
+```
+
+## Subset by significant
+```{r}
+sigRes.Naive <- allRes.Naive %>% subset(padj < 0.05)
+sigRes.Injured <- allRes.Injured %>% subset(padj < 0.05)
+```
+
+## Summarize results
+```{r}
+cat("For the naive dataset,", nrow(sigRes.Naive), "genes were differentially expressed (BH adjusted p-value < 0.05), out of the", nrow(allRes.Naive), "tested genes.")
+
+cat("\n\nFor the injured dataset,", nrow(sigRes.Injured), "genes were differentially expressed (BH adjusted p-value < 0.05), out of the", nrow(allRes.Injured), "tested genes.")
+```
+## Preview {.tabset}
+
+### Naive
+```{r echo=FALSE}
+kable(sigRes.Naive, format="html") %>% kable_styling("striped") %>% scroll_box(width = "100%")
+```
+
+### Injured
+```{r echo=FALSE}
+kable(sigRes.Injured, format="html") %>% kable_styling("striped") %>% scroll_box(width = "100%")
+```
+
+## {-}
+
+# Plot results
+
+
 
 
 
