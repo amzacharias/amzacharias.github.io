@@ -30,6 +30,7 @@ library(GEOquery) # version 2.66.0
 library(dplyr) # version 1.1.4
 library(DESeq2) # version 1.38.3
 library(edgeR) # version 3.40.2
+library(ggplot2)
 ```
 
 # Folder system setup
@@ -155,8 +156,12 @@ coldata <- seriesMatrix %>%
   mutate(phenotype = ifelse(
     phenotype == "naïve", "naive", "injured"
   )) %>% 
-  # Ensure the `phenotype` column is stored as a factor
-  mutate(phenotype = factor(phenotype, levels = c("naive", "injured")))
+  # Ensure the `phenotype` and `sex` columns are stored as a factor
+  mutate(
+    sex = factor(sex, levels = c("male", "female")), 
+    phenotype = factor(phenotype, levels = c("naive", "injured"))
+    )
+rownames(coldata) <- coldata$sampleId
 ```
 
 For reasons that will be explained, split coldata by phenotype
@@ -237,6 +242,68 @@ injuredCounts <- rawInjured %>% GenesToRownames() %>% OrganizeGeneColumns(inCold
 head(naiveCounts, n = 2)
 head(injuredCounts, n = 2)
 ```
+
+## Quality Control
+
+Let's do some very basic quality control of samples by using unsupervised clustering. Specifically, we will do Principal Component Analysis with DESeq2.
+
+> Input for DESeq2 should always be raw counts. Based on author comments, it appears that the counts downloaded are FPKM transformed, i.e. not raw. For this reason, the code used in this tutorial is fine, but the results should be taken with a grain of salt.
+
+### Initalize DESeq2 Objects
+
+Our variable of interest for DEA is sex. I.e. what genes are different between male and female?
+DESeq2 expects gene counts to be whole numbers. Since our counts are floats, we simply round them.
+
+```{r}
+ddsNaive <- DESeqDataSetFromMatrix(
+  countData = round(naiveCounts), colData = coldataList$naive, design = ~sex)
+ddsInjured <- DESeqDataSetFromMatrix(
+  countData = round(injuredCounts), colData = coldataList$injured, design = ~sex)
+```
+
+### Transformation
+
+The purpose of transforming gene counts prior to unsupervised clustering is to prevent highly expressed genes from nominating the clustering results. DESeq2 provides two methods to achieve this: 
+
+1) Regularized log transformation (`rlog`): Proportedly more robust size factors, calculated from sample gene composition and sequencing depth, varies widely.
+2) Variance stabilizing transformation (`vst`): Less computationally expensive, so used when the input dataset is very large.
+
+Let's try both and compare! 
+```{r}
+DoTransformations <- function(ddsObj){
+  #' This function performs both the rlog and vst transformation and returns as a named list
+  tList <- list(
+    "rlog" = rlog(ddsObj), 
+    "vst" = varianceStabilizingTransformation(ddsObj)
+  )
+  return(tList)
+}
+t.ddsNaive <- DoTransformations(ddsNaive)
+t.ddsInjured <- DoTransformations(ddsInjured)
+```
+
+### PCA Calculations
+
+Storing results in a named list, so we don't have to copy-and-paste as much code during the plotting step.
+```{r}
+pcaDataList <- list(
+  "rlog.naive" = plotPCA(t.ddsNaive$rlog, intgroup = "sex", returnData = TRUE),
+  "rlog.injured" = plotPCA(t.ddsInjured$rlog, intgroup = "sex", returnData = TRUE),
+  "vst.naive" = plotPCA(t.ddsNaive$vst, intgroup = "sex", returnData = TRUE),
+  "vst.injured" = plotPCA(t.ddsInjured$vst, intgroup = "sex", returnData = TRUE)
+)
+```
+
+### PCA Plots
+```{r}
+pcaDataList$vst.injured %>% 
+  ggplot(aes(x = PC1, y = PC2, colour = sex, shape = sex)) + 
+  geom_point(size = 3) + 
+  theme_bw() + 
+  coord_fixed()
+
+```
+
 
 
 
