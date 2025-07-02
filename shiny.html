@@ -22,7 +22,15 @@
                     <li><a href="index.html">Home</a></li>
                     <li><a href="cv.html">CV</a></li>
                     <li><a href="https://github.com/amzacharias" target="_blank" rel="noopener noreferrer">Github</a></li>
-                    <li><a href="tutorials.html">Tutorials</a></li>
+                    <li>
+                      <div class="dropdown" style="display:inline-block;position:relative;">
+                        <button class="dropbtn" style="background:none;border:none;font:inherit;cursor:pointer;">Tutorials <i class="fa fa-caret-down"></i></button>
+                        <div class="dropdown-content" id="tutorialLinksDropdown" style="display:none;position:absolute;background:#fff;min-width:200px;z-index:1;box-shadow:0 8px 16px rgba(0,0,0,0.2);">
+                          <a href="#" class="tutorial-link" data-src="tutorials/introToR.html" style="display:block;padding:8px 16px;color:#000;text-decoration:none;">Introduction to R</a>
+                          <a href="#" class="tutorial-link" data-src="tutorials/introToDEA.html" style="display:block;padding:8px 16px;color:#000;text-decoration:none;">Introduction to DEA</a>
+                        </div>
+                      </div>
+                    </li>
                     <li><a href="shiny.html">Shiny</a></li>
                 </div>
             </ul>
@@ -39,5 +47,8 @@
                 <a href="https://www.linkedin.com/in/amanda-zacharias" class="fa fa-linkedin"></a>
         </div>
     </body>
+
+    <!-- JavaScript -->
+    <script src="tutorial-dropdown.js"></script>
 
 </html>
