@@ -137,38 +137,72 @@ body {
   width: 100%;
   height: 80vh; 
 }
+
+/* Funding table */
+.cv-funding {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  color: #000;
+  margin: 0.1em 0;
+  font-size: 1em;
+}
+.cv-funding th,
+.cv-funding td {
+  border: none;
+  background: #fff;
+  color: #000;
+  padding: 0.2em 0.1em;
+  text-align: left;
+  box-shadow: none;
+  vertical-align: top;
+}
+.cv-funding th {
+  font-weight: bold;
+}
+.cv-funding td:nth-child(2) {
+  white-space: normal;
+  word-break: break-word;
+  max-width: 340px;
+}
+.cv-funding tr {
+  background: #fff;
+}
+
 /* Automatic J-style numbering for CV lists */
 .cv-publications {
     counter-reset: pubnum;
 }
 .cv-publications li {
     counter-increment: pubnum;
-    text-indent: -2.5em;
-    padding-left: 2.5em;
+    padding-left: 30px;
     margin-bottom: 1em;
     position: relative;
 }
 .cv-publications li::before {
     content: "J" counter(pubnum) ". ";
-    font-weight: bold;
+    font-weight: normal;
     position: absolute;
     left: 0;
+    width: 30px;
+    display: inline-block;
 }
 .cv-talks {
     counter-reset: itemnum;
 }
 .cv-talks li {
     counter-increment: itemnum;
-    text-indent: -2.5em;
-    padding-left: 2.5em;
+    padding-left: 30px;
     margin-bottom: 1em;
     position: relative;
 }
 .cv-talks li::before {
     content: "T" counter(itemnum) ". ";
-    font-weight: bold;
+    font-weight: normal;
     position: absolute;
     left: 0;
+    width: 30px;
+    display: inline-block;
 }
 
 /* Footer */
