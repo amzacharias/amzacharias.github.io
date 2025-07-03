@@ -169,7 +169,7 @@ body {
   background: #fff;
 }
 
-/* Automatic J-style numbering for CV lists */
+/* Automatic numbering for CV lists */
 .cv-publications {
     counter-reset: pubnum;
 }
